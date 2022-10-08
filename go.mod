@@ -1,4 +1,4 @@
-module grapher
+module github.com/reaganiwadha/grapher
 
 go 1.13
 
