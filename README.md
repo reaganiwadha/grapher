@@ -3,7 +3,9 @@ Neat extra tooling for [graphql-go](https://github.com/graphql-go/graphql).
 
 ## v1 Development
 This package is still a work-in-progress. The feature candidates for the v1 release is :
-- [ ] Struct-tags approach to building `graphql.Object`/`graphql.InputObject`
+- [x] Struct to `graphql.Object`/~~`graphql.InputObject`~~ translator utilizing struct tags
+- [ ] Configurable struct tags translator
+- [ ] Custom implementable interface for `graphql.Object`/`graphql.InputObject` naming/description
 - [ ] Schema field builder utilizing go 1.18 Generics feature ensuring type safety
 - [ ] Resolver middlewares
 - [x] Mux-like schema building with `MutationQueryCollector`
