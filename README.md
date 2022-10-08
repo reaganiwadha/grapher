@@ -1,4 +1,6 @@
-# grapher
+# grapher 
+[![codecov](https://codecov.io/gh/reaganiwadha/grapher/branch/trunk/graph/badge.svg)](https://codecov.io/gh/reaganiwadha/grapher)
+
 Neat extra tooling for [graphql-go](https://github.com/graphql-go/graphql).
 
 ## v1 Development
