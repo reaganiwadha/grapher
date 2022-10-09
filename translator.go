@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// OutputTranslationTable is a map that stores the graphql.Output according to it's type
 type OutputTranslationTable map[string]graphql.Output
 
 var primitiveTranslationTable = OutputTranslationTable{
@@ -48,9 +49,20 @@ func getNamingByStructField(field reflect.StructField) string {
 	return field.Name
 }
 
+// Translator purpose is to provide an easy way of translating various types into graphql types
+type Translator interface {
+	Translate(t interface{}) (ret graphql.Output, err error)
+	TranslateInput(t interface{}) (ret *graphql.InputObject, err error)
+	TranslateArgs(t interface{}) (ret graphql.FieldConfigArgument, err error)
+
+	MustTranslate(t interface{}) graphql.Output
+	MustTranslateInput(t interface{}) *graphql.InputObject
+	MustTranslateArgs(t interface{}) (ret graphql.FieldConfigArgument)
+}
+
 // New Returns a new translator
 // It also stores already translated graphql.Object/graphql.InputObject to eliminate duplicates
-func New() translator {
+func New() Translator {
 	return translator{
 		outputObjTable:      OutputTranslationTable{},
 		outputInputObjTable: OutputTranslationTable{},
@@ -154,8 +166,8 @@ func assertStruct(v reflect.Type) (structType reflect.Type, err error) {
 	return v, nil
 }
 
-// TranslateInputObject Translate translates a struct into a *graphql.InputObject
-func (g translator) TranslateInputObject(t interface{}) (ret *graphql.InputObject, err error) {
+// TranslateInput translates a struct into a *graphql.InputObject
+func (g translator) TranslateInput(t interface{}) (ret *graphql.InputObject, err error) {
 	v := reflect.TypeOf(t)
 	if _, err = assertStruct(v); err != nil {
 		return
@@ -166,9 +178,9 @@ func (g translator) TranslateInputObject(t interface{}) (ret *graphql.InputObjec
 	return out.(*graphql.InputObject), err
 }
 
-// MustTranslateInputObject calls TranslateInputObject, but will panic on error
-func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject {
-	ret, err := g.TranslateInputObject(t)
+// MustTranslateInput calls TranslateInputObject, but will panic on error
+func (g translator) MustTranslateInput(t interface{}) *graphql.InputObject {
+	ret, err := g.TranslateInput(t)
 
 	if err != nil {
 		panic(err)
@@ -177,7 +189,8 @@ func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject
 	return ret
 }
 
-func (g translator) TranslateFieldConfigArgument(t interface{}) (ret graphql.FieldConfigArgument, err error) {
+// TranslateArgs translates a struct into a graphql.FieldConfigArgument
+func (g translator) TranslateArgs(t interface{}) (ret graphql.FieldConfigArgument, err error) {
 	structType, err := assertStruct(reflect.TypeOf(t))
 
 	if err != nil {
@@ -200,8 +213,9 @@ func (g translator) TranslateFieldConfigArgument(t interface{}) (ret graphql.Fie
 	return
 }
 
-func (g translator) MustTranslateFieldConfigArgument(t interface{}) (ret graphql.FieldConfigArgument) {
-	ret, err := g.TranslateFieldConfigArgument(t)
+// MustTranslateArgs calls TranslateArgs, but will panic on error
+func (g translator) MustTranslateArgs(t interface{}) (ret graphql.FieldConfigArgument) {
+	ret, err := g.TranslateArgs(t)
 
 	if err != nil {
 		panic(err)

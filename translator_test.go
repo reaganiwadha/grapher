@@ -135,7 +135,7 @@ func testQueryUser(t *testing.T, obj *graphql.InputObject) {
 func TestTranslateInput_NestedStruct(t *testing.T) {
 	g := New()
 
-	inputObj, err := g.TranslateInputObject(&QueryUser{})
+	inputObj, err := g.TranslateInput(&QueryUser{})
 	assert.NoError(t, err)
 	testQueryUser(t, inputObj)
 }
@@ -143,10 +143,10 @@ func TestTranslateInput_NestedStruct(t *testing.T) {
 func TestTranslateInput_NestedStruct_WithCache(t *testing.T) {
 	g := New()
 
-	whereObj, err := g.TranslateInputObject(&QueryUserWhereClause{})
+	whereObj, err := g.TranslateInput(&QueryUserWhereClause{})
 	testQueryUserWhereClause(t, whereObj)
 
-	queryObj, err := g.TranslateInputObject(&QueryUser{})
+	queryObj, err := g.TranslateInput(&QueryUser{})
 	assert.NoError(t, err)
 	testQueryUser(t, queryObj)
 }
@@ -154,7 +154,7 @@ func TestTranslateInput_NestedStruct_WithCache(t *testing.T) {
 func TestTranslateInput_Value_Errors(t *testing.T) {
 	g := New()
 
-	_, err := g.TranslateInputObject(2)
+	_, err := g.TranslateInput(2)
 
 	assert.Error(t, err)
 }
@@ -163,14 +163,14 @@ func TestMustTranslateInput_ValueType_Panics(t *testing.T) {
 	g := New()
 
 	assert.Panics(t, func() {
-		g.MustTranslateInputObject(2)
+		g.MustTranslateInput(2)
 	})
 }
 
 func TestMustTranslateInput_NestedStruct(t *testing.T) {
 	g := New()
 
-	obj := g.MustTranslateInputObject(&QueryUser{})
+	obj := g.MustTranslateInput(&QueryUser{})
 	testQueryUser(t, obj)
 }
 
@@ -183,32 +183,32 @@ func testQueryUserFieldConfigArgument(t *testing.T, fieldArgs graphql.FieldConfi
 	assert.Equal(t, whereArgs["name_like"].Type, graphql.NewNonNull(graphql.String))
 }
 
-func TestTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
+func TestTranslateArgs_NestedStruct(t *testing.T) {
 	g := New()
 
-	fieldArgs, err := g.TranslateFieldConfigArgument(&QueryUser{})
+	fieldArgs, err := g.TranslateArgs(&QueryUser{})
 	assert.NoError(t, err)
 	testQueryUserFieldConfigArgument(t, fieldArgs)
 }
 
-func TestTranslateFieldConfigArgument_ValueType_Errors(t *testing.T) {
+func TestTranslateArgs_ValueType_Errors(t *testing.T) {
 	g := New()
 
-	_, err := g.TranslateFieldConfigArgument(1)
+	_, err := g.TranslateArgs(1)
 	assert.Error(t, err)
 }
 
-func TestMustTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
+func TestMustTranslateArgs_NestedStruct(t *testing.T) {
 	g := New()
 
-	fieldArgs := g.MustTranslateFieldConfigArgument(&QueryUser{})
+	fieldArgs := g.MustTranslateArgs(&QueryUser{})
 	testQueryUserFieldConfigArgument(t, fieldArgs)
 }
 
-func TestMustTranslateFieldConfigArgument_ValueType_Panics(t *testing.T) {
+func TestMustTranslateArgs_ValueType_Panics(t *testing.T) {
 	g := New()
 
 	assert.Panics(t, func() {
-		g.MustTranslateFieldConfigArgument(2)
+		g.MustTranslateArgs(2)
 	})
 }
