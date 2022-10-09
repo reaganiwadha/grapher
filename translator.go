@@ -97,15 +97,18 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 
 		for i := 0; i < t.NumField(); i++ {
 			fieldT := t.Field(i).Type
+			fieldDesc := t.Field(i).Tag.Get("grapher_d")
 			fieldOut, _ := g.translateOutputRefType(fieldT, inputObject)
 
 			if inputObject {
 				inputFields[getNamingByStructField(t.Field(i))] = &graphql.InputObjectFieldConfig{
-					Type: fieldOut,
+					Type:        fieldOut,
+					Description: fieldDesc,
 				}
 			} else {
 				fields[getNamingByStructField(t.Field(i))] = &graphql.Field{
-					Type: fieldOut,
+					Type:        fieldOut,
+					Description: fieldDesc,
 				}
 			}
 		}

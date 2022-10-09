@@ -8,7 +8,6 @@ This package is still a work-in-progress. The feature candidates for the v1 rele
 - [x] Struct to `graphql.Object`/`graphql.InputObject` translator utilizing struct tags
 - [x] Struct to `map[string]*graphql.ArgumentConfig{}`
 - [ ] Configurable struct tags translator
-- [ ] Custom implementable interface for `graphql.Object`/`graphql.InputObject` naming/description
 - [ ] Schema field builder utilizing go 1.18 Generics feature ensuring type safety
 - [ ] Resolver middlewares
 - [x] Mux-like schema building with `MutationQueryCollector`

@@ -57,6 +57,7 @@ func testCustomerType(t *testing.T, actual graphql.Output) {
 	assert.Equal(t, "Customer", obj.Name())
 	assert.Equal(t, obj.Fields()["ID"].Type, graphql.NewNonNull(graphql.Int))
 	assert.Equal(t, obj.Fields()["Name"].Type, graphql.NewNonNull(graphql.String))
+	assert.Equal(t, obj.Fields()["Name"].Description, "The name of the customer")
 	assert.Equal(t, obj.Fields()["Address"].Type, graphql.String)
 }
 
@@ -69,7 +70,7 @@ func testOrderType(t *testing.T, actual graphql.Output) {
 
 type Customer struct {
 	ID      int
-	Name    string
+	Name    string `grapher_d:"The name of the customer"`
 	Address *string
 }
 
