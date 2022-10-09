@@ -158,3 +158,19 @@ func TestTranslateInput_Value_Errors(t *testing.T) {
 
 	assert.Error(t, err)
 }
+
+func TestMustTranslateInput_ValueType_Panics(t *testing.T) {
+	g := New()
+
+	assert.Panics(t, func() {
+		g.MustTranslateInputObject(2)
+	})
+}
+
+func TestMustTranslateInput_NestedStruct(t *testing.T) {
+	g := New()
+
+	obj := g.MustTranslateInputObject(&QueryUser{})
+
+	testQueryUser(t, obj)
+}

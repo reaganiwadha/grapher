@@ -10,7 +10,7 @@ import (
 
 type OutputTranslationTable map[string]graphql.Output
 
-var PrimitiveTranslationTable = OutputTranslationTable{
+var primitiveTranslationTable = OutputTranslationTable{
 	"int":     graphql.Int,
 	"int8":    graphql.Int,
 	"int16":   graphql.Int,
@@ -75,7 +75,7 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 		ret = cached
 	} else if cached, ok := g.outputInputObjTable[t.Name()]; ok && inputObject {
 		ret = cached
-	} else if prim, ok := PrimitiveTranslationTable[t.Name()]; ok {
+	} else if prim, ok := primitiveTranslationTable[t.Name()]; ok {
 		ret = prim
 	} else if t.Kind() == reflect.Map {
 		ret = scalars.ScalarJSON
@@ -160,14 +160,13 @@ func (g translator) TranslateInputObject(t interface{}) (*graphql.InputObject, e
 	return out.(*graphql.InputObject), err
 }
 
-//
-//// MustTranslateInputObject calls TranslateInputObject, but will panic on error
-//func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject {
-//	ret, err := g.TranslateInputObject(t)
-//
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	return ret
-//}
+// MustTranslateInputObject calls TranslateInputObject, but will panic on error
+func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject {
+	ret, err := g.TranslateInputObject(t)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return ret
+}
