@@ -171,6 +171,25 @@ func TestMustTranslateInput_NestedStruct(t *testing.T) {
 	g := New()
 
 	obj := g.MustTranslateInputObject(&QueryUser{})
-
 	testQueryUser(t, obj)
+}
+
+func TestTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
+	g := New()
+
+	fieldArgs, err := g.TranslateFieldConfigArgument(&QueryUser{})
+	assert.NoError(t, err)
+	assert.Equal(t, fieldArgs["limit"].Type, graphql.Int)
+	assert.Equal(t, fieldArgs["offset"].Type, graphql.Int)
+
+	whereObj := fieldArgs["where"].Type.(*graphql.InputObject)
+	whereArgs := whereObj.Fields()
+	assert.Equal(t, whereArgs["name_like"].Type, graphql.NewNonNull(graphql.String))
+}
+
+func TestTranslateFieldConfigArgument_Value_Errors(t *testing.T) {
+	g := New()
+
+	_, err := g.TranslateFieldConfigArgument(1)
+	assert.Error(t, err)
 }

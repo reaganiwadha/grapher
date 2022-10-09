@@ -142,17 +142,23 @@ func (g translator) MustTranslate(t interface{}) graphql.Output {
 	return ret
 }
 
-// TranslateInputObject Translate translates a struct into a *graphql.InputObject
-func (g translator) TranslateInputObject(t interface{}) (*graphql.InputObject, error) {
-	v := reflect.TypeOf(t)
-	testV := v
-
-	if testV.Kind() == reflect.Pointer {
-		testV = testV.Elem()
+func assertStruct(v reflect.Type) (structType reflect.Type, err error) {
+	if v.Kind() == reflect.Pointer {
+		v = v.Elem()
 	}
 
-	if testV.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("grapher: TranslateInputObject only works with a struct type")
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("grapher: not a struct type")
+	}
+
+	return v, nil
+}
+
+// TranslateInputObject Translate translates a struct into a *graphql.InputObject
+func (g translator) TranslateInputObject(t interface{}) (ret *graphql.InputObject, err error) {
+	v := reflect.TypeOf(t)
+	if _, err = assertStruct(v); err != nil {
+		return
 	}
 
 	out, err := g.translateOutputRefType(v, true)
@@ -169,4 +175,27 @@ func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject
 	}
 
 	return ret
+}
+
+func (g translator) TranslateFieldConfigArgument(t interface{}) (ret graphql.FieldConfigArgument, err error) {
+	structType, err := assertStruct(reflect.TypeOf(t))
+
+	if err != nil {
+		return
+	}
+
+	ret = graphql.FieldConfigArgument{}
+
+	for i := 0; i < structType.NumField(); i++ {
+		field, _ := g.translateOutputRefType(structType.Field(i).Type, true)
+		//if fieldErr != nil{
+		//	return nil, fieldErr
+		//}
+
+		ret[getNamingByStructField(structType.Field(i))] = &graphql.ArgumentConfig{
+			Type: field,
+		}
+	}
+
+	return
 }
