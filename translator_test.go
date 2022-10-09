@@ -2,6 +2,7 @@ package grapher
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/reaganiwadha/grapher/scalars"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -44,7 +45,7 @@ func TestTranslate_MapType(t *testing.T) {
 		"cool": "hi",
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, graphql.NewNonNull(ScalarJSON), obj)
+	assert.Equal(t, graphql.NewNonNull(scalars.ScalarJSON), obj)
 }
 
 func testCustomerType(t *testing.T, actual graphql.Output) {

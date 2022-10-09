@@ -3,6 +3,7 @@ package grapher
 import (
 	"fmt"
 	"github.com/graphql-go/graphql"
+	"github.com/reaganiwadha/grapher/scalars"
 	"reflect"
 	"strings"
 )
@@ -77,7 +78,7 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 	} else if prim, ok := PrimitiveTranslationTable[t.Name()]; ok {
 		ret = prim
 	} else if t.Kind() == reflect.Map {
-		ret = ScalarJSON
+		ret = scalars.ScalarJSON
 	} else if t.Kind() == reflect.Struct {
 		fields := graphql.Fields{}
 		inputFields := graphql.InputObjectConfigFieldMap{}
