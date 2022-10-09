@@ -8,10 +8,10 @@ import (
 	"strings"
 )
 
-// OutputTranslationTable is a map that stores the graphql.Output according to it's type
-type OutputTranslationTable map[string]graphql.Output
+// TranslationMap is a map that stores the graphql.Output according to it's type
+type TranslationMap map[string]graphql.Output
 
-var primitiveTranslationTable = OutputTranslationTable{
+var primitiveTranslationTable = TranslationMap{
 	"int":     graphql.Int,
 	"int8":    graphql.Int,
 	"int16":   graphql.Int,
@@ -30,13 +30,14 @@ var primitiveTranslationTable = OutputTranslationTable{
 
 // TranslatorConfig Stores the configuration of the graphql object builder
 type TranslatorConfig struct {
-	TypeTranslationTable     OutputTranslationTable
-	DisablePointerToNullable bool
+	// PredefinedTranslation ignores whether it's a pointer or not, beware!
+	PredefinedTranslation TranslationMap
 }
 
 type translator struct {
-	outputObjTable      OutputTranslationTable
-	outputInputObjTable OutputTranslationTable
+	outputObjTable        TranslationMap
+	outputInputObjTable   TranslationMap
+	predefinedTranslation TranslationMap
 }
 
 func getNamingByStructField(field reflect.StructField) string {
@@ -60,13 +61,22 @@ type Translator interface {
 	MustTranslateArgs(t interface{}) (ret graphql.FieldConfigArgument)
 }
 
-// New Returns a new translator
+// NewTranslator returns a new translator
 // It also stores already translated graphql.Object/graphql.InputObject to eliminate duplicates
-func New() Translator {
-	return translator{
-		outputObjTable:      OutputTranslationTable{},
-		outputInputObjTable: OutputTranslationTable{},
+func NewTranslator(args ...*TranslatorConfig) Translator {
+	t := translator{
+		outputObjTable:      TranslationMap{},
+		outputInputObjTable: TranslationMap{},
 	}
+
+	if len(args) != 0 {
+		arg := args[0]
+		if arg.PredefinedTranslation != nil {
+			t.predefinedTranslation = arg.PredefinedTranslation
+		}
+	}
+
+	return t
 }
 
 func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (ret graphql.Output, err error) {
@@ -83,11 +93,16 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 		isPtr = true
 	}
 
-	if cached, ok := g.outputObjTable[t.Name()]; ok && !inputObject {
+	tName := t.String()
+
+	if predefined, ok := g.predefinedTranslation[tName]; ok {
+		ret = predefined
+		return
+	} else if cached, ok := g.outputObjTable[tName]; ok && !inputObject {
 		ret = cached
-	} else if cached, ok := g.outputInputObjTable[t.Name()]; ok && inputObject {
+	} else if cached, ok := g.outputInputObjTable[tName]; ok && inputObject {
 		ret = cached
-	} else if prim, ok := primitiveTranslationTable[t.Name()]; ok {
+	} else if prim, ok := primitiveTranslationTable[tName]; ok {
 		ret = prim
 	} else if t.Kind() == reflect.Map {
 		ret = scalars.ScalarJSON
@@ -118,13 +133,13 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 				Name:   t.Name(),
 				Fields: inputFields,
 			})
-			g.outputInputObjTable[t.Name()] = ret
+			g.outputInputObjTable[t.String()] = ret
 		} else {
 			ret = graphql.NewObject(graphql.ObjectConfig{
 				Name:   t.Name(),
 				Fields: fields,
 			})
-			g.outputObjTable[t.Name()] = ret
+			g.outputObjTable[t.String()] = ret
 		}
 	}
 

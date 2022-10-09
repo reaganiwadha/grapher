@@ -2,28 +2,34 @@ package grapher
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/guregu/null"
 	"github.com/reaganiwadha/grapher/scalars"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestMustTranslate_ValueType(t *testing.T) {
-	g := New()
-
-	obj := g.MustTranslate("test")
-	assert.Equal(t, graphql.NewNonNull(graphql.String), obj)
-}
-
 func TestTranslate_ValueType(t *testing.T) {
-	g := New()
+	g := NewTranslator()
 
 	obj, err := g.Translate("test")
 	assert.Equal(t, graphql.NewNonNull(graphql.String), obj)
 	assert.NoError(t, err)
 }
 
+func TestTranslate_ValueType_WithPredefinedTranslation(t *testing.T) {
+	g := NewTranslator(&TranslatorConfig{
+		PredefinedTranslation: TranslationMap{
+			"null.Int": graphql.Int,
+		},
+	})
+
+	obj, err := g.Translate(null.IntFrom(1))
+	assert.NoError(t, err)
+	assert.Equal(t, graphql.Int, obj)
+}
+
 func TestTranslate_SliceType(t *testing.T) {
-	g := New()
+	g := NewTranslator()
 
 	obj, err := g.Translate([]int{1, 2, 3})
 	assert.NoError(t, err)
@@ -31,7 +37,7 @@ func TestTranslate_SliceType(t *testing.T) {
 }
 
 func TestTranslate_ArrayType(t *testing.T) {
-	g := New()
+	g := NewTranslator()
 
 	obj, err := g.Translate([3]int{3, 3, 2})
 	assert.NoError(t, err)
@@ -39,13 +45,20 @@ func TestTranslate_ArrayType(t *testing.T) {
 }
 
 func TestTranslate_MapType(t *testing.T) {
-	g := New()
+	g := NewTranslator()
 
 	obj, err := g.Translate(map[string]string{
 		"cool": "hi",
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, graphql.NewNonNull(scalars.ScalarJSON), obj)
+}
+
+func TestMustTranslate_ValueType(t *testing.T) {
+	g := NewTranslator()
+
+	obj := g.MustTranslate("test")
+	assert.Equal(t, graphql.NewNonNull(graphql.String), obj)
 }
 
 func testCustomerType(t *testing.T, actual graphql.Output) {
@@ -79,24 +92,24 @@ type Order struct {
 	Customer Customer `json:"customer"`
 }
 
-func TestTranslate_SimpleStruct(t *testing.T) {
-	g := New()
+func TestTranslator_Translate_SimpleStruct(t *testing.T) {
+	g := NewTranslator()
 
 	obj, err := g.Translate(&Customer{})
 	assert.NoError(t, err)
 	testCustomerType(t, obj)
 }
 
-func TestTranslate_NestedStruct_WithoutCache(t *testing.T) {
-	g := New()
+func TestTranslator_Translate_WithoutCache(t *testing.T) {
+	g := NewTranslator()
 
 	obj, err := g.Translate(&Order{})
 	assert.NoError(t, err)
 	testOrderType(t, obj)
 }
 
-func TestTranslate_NestedStruct_WithCache(t *testing.T) {
-	g := New()
+func TestTranslator_Translate_NestedStruct_WithCache(t *testing.T) {
+	g := NewTranslator()
 
 	obj, err := g.Translate(&Customer{})
 	assert.NoError(t, err)
@@ -133,16 +146,16 @@ func testQueryUser(t *testing.T, obj *graphql.InputObject) {
 	testQueryUserWhereClause(t, fields["where"].Type.(*graphql.InputObject))
 }
 
-func TestTranslateInput_NestedStruct(t *testing.T) {
-	g := New()
+func TestTranslator_TranslateInput_NestedStruct(t *testing.T) {
+	g := NewTranslator()
 
 	inputObj, err := g.TranslateInput(&QueryUser{})
 	assert.NoError(t, err)
 	testQueryUser(t, inputObj)
 }
 
-func TestTranslateInput_NestedStruct_WithCache(t *testing.T) {
-	g := New()
+func TestTranslator_TranslateInput_NestedStruct_WithCache(t *testing.T) {
+	g := NewTranslator()
 
 	whereObj, err := g.TranslateInput(&QueryUserWhereClause{})
 	testQueryUserWhereClause(t, whereObj)
@@ -152,24 +165,24 @@ func TestTranslateInput_NestedStruct_WithCache(t *testing.T) {
 	testQueryUser(t, queryObj)
 }
 
-func TestTranslateInput_Value_Errors(t *testing.T) {
-	g := New()
+func TestTranslator_TranslateInput_ValueType_Errors(t *testing.T) {
+	g := NewTranslator()
 
 	_, err := g.TranslateInput(2)
 
 	assert.Error(t, err)
 }
 
-func TestMustTranslateInput_ValueType_Panics(t *testing.T) {
-	g := New()
+func TestTranslator_MustTranslateInput_ValueType_Panics(t *testing.T) {
+	g := NewTranslator()
 
 	assert.Panics(t, func() {
 		g.MustTranslateInput(2)
 	})
 }
 
-func TestMustTranslateInput_NestedStruct(t *testing.T) {
-	g := New()
+func TestTranslator_MustTranslateInput_NestedStruct(t *testing.T) {
+	g := NewTranslator()
 
 	obj := g.MustTranslateInput(&QueryUser{})
 	testQueryUser(t, obj)
@@ -184,30 +197,30 @@ func testQueryUserFieldConfigArgument(t *testing.T, fieldArgs graphql.FieldConfi
 	assert.Equal(t, whereArgs["name_like"].Type, graphql.NewNonNull(graphql.String))
 }
 
-func TestTranslateArgs_NestedStruct(t *testing.T) {
-	g := New()
+func TestTranslator_TranslateArgs_NestedStruct(t *testing.T) {
+	g := NewTranslator()
 
 	fieldArgs, err := g.TranslateArgs(&QueryUser{})
 	assert.NoError(t, err)
 	testQueryUserFieldConfigArgument(t, fieldArgs)
 }
 
-func TestTranslateArgs_ValueType_Errors(t *testing.T) {
-	g := New()
+func TestTranslator_TranslateArgs_ValueType_Errors(t *testing.T) {
+	g := NewTranslator()
 
 	_, err := g.TranslateArgs(1)
 	assert.Error(t, err)
 }
 
-func TestMustTranslateArgs_NestedStruct(t *testing.T) {
-	g := New()
+func TestTranslator_MustTranslateArgs_NestedStruct(t *testing.T) {
+	g := NewTranslator()
 
 	fieldArgs := g.MustTranslateArgs(&QueryUser{})
 	testQueryUserFieldConfigArgument(t, fieldArgs)
 }
 
-func TestMustTranslateArgs_ValueType_Panics(t *testing.T) {
-	g := New()
+func TestTranslator_MustTranslateArgs_ValueType_Panics(t *testing.T) {
+	g := NewTranslator()
 
 	assert.Panics(t, func() {
 		g.MustTranslateArgs(2)
