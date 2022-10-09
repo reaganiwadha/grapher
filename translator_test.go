@@ -174,11 +174,7 @@ func TestMustTranslateInput_NestedStruct(t *testing.T) {
 	testQueryUser(t, obj)
 }
 
-func TestTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
-	g := New()
-
-	fieldArgs, err := g.TranslateFieldConfigArgument(&QueryUser{})
-	assert.NoError(t, err)
+func testQueryUserFieldConfigArgument(t *testing.T, fieldArgs graphql.FieldConfigArgument) {
 	assert.Equal(t, fieldArgs["limit"].Type, graphql.Int)
 	assert.Equal(t, fieldArgs["offset"].Type, graphql.Int)
 
@@ -187,9 +183,32 @@ func TestTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
 	assert.Equal(t, whereArgs["name_like"].Type, graphql.NewNonNull(graphql.String))
 }
 
-func TestTranslateFieldConfigArgument_Value_Errors(t *testing.T) {
+func TestTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
+	g := New()
+
+	fieldArgs, err := g.TranslateFieldConfigArgument(&QueryUser{})
+	assert.NoError(t, err)
+	testQueryUserFieldConfigArgument(t, fieldArgs)
+}
+
+func TestTranslateFieldConfigArgument_ValueType_Errors(t *testing.T) {
 	g := New()
 
 	_, err := g.TranslateFieldConfigArgument(1)
 	assert.Error(t, err)
+}
+
+func TestMustTranslateFieldConfigArgument_NestedStruct(t *testing.T) {
+	g := New()
+
+	fieldArgs := g.MustTranslateFieldConfigArgument(&QueryUser{})
+	testQueryUserFieldConfigArgument(t, fieldArgs)
+}
+
+func TestMustTranslateFieldConfigArgument_ValueType_Panics(t *testing.T) {
+	g := New()
+
+	assert.Panics(t, func() {
+		g.MustTranslateFieldConfigArgument(2)
+	})
 }

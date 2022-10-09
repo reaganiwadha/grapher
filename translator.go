@@ -199,3 +199,13 @@ func (g translator) TranslateFieldConfigArgument(t interface{}) (ret graphql.Fie
 
 	return
 }
+
+func (g translator) MustTranslateFieldConfigArgument(t interface{}) (ret graphql.FieldConfigArgument) {
+	ret, err := g.TranslateFieldConfigArgument(t)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return
+}
