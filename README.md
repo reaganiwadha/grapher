@@ -18,7 +18,5 @@ If you have any feature ideas, do not hesitate to tell and open a new issue in t
 ## Contributing
 Contributions in any way, shape, or form is super welcomed! If you have any issues, ideas or even a question just open a new issue, or make a pull request. 
 
-![FastAndSimple](https://genericfilter.quest/FastAndSimple.png)
-
 ## License
 MIT
