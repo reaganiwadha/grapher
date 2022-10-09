@@ -1,6 +1,7 @@
 package grapher
 
 import (
+	"fmt"
 	"github.com/graphql-go/graphql"
 	"reflect"
 	"strings"
@@ -32,7 +33,8 @@ type TranslatorConfig struct {
 }
 
 type translator struct {
-	outputTranslationMap OutputTranslationTable
+	outputObjTable      OutputTranslationTable
+	outputInputObjTable OutputTranslationTable
 }
 
 func getNamingByStructField(field reflect.StructField) string {
@@ -49,11 +51,12 @@ func getNamingByStructField(field reflect.StructField) string {
 // It also stores already translated graphql.Object/graphql.InputObject to eliminate duplicates
 func New() translator {
 	return translator{
-		outputTranslationMap: OutputTranslationTable{},
+		outputObjTable:      OutputTranslationTable{},
+		outputInputObjTable: OutputTranslationTable{},
 	}
 }
 
-func (g translator) translateOutputRefType(t reflect.Type) (ret graphql.Output, err error) {
+func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (ret graphql.Output, err error) {
 	isPtr := false
 	isArr := false
 
@@ -67,7 +70,9 @@ func (g translator) translateOutputRefType(t reflect.Type) (ret graphql.Output, 
 		isPtr = true
 	}
 
-	if cached, ok := g.outputTranslationMap[t.Name()]; ok {
+	if cached, ok := g.outputObjTable[t.Name()]; ok && !inputObject {
+		ret = cached
+	} else if cached, ok := g.outputInputObjTable[t.Name()]; ok && inputObject {
 		ret = cached
 	} else if prim, ok := PrimitiveTranslationTable[t.Name()]; ok {
 		ret = prim
@@ -75,22 +80,36 @@ func (g translator) translateOutputRefType(t reflect.Type) (ret graphql.Output, 
 		ret = ScalarJSON
 	} else if t.Kind() == reflect.Struct {
 		fields := graphql.Fields{}
+		inputFields := graphql.InputObjectConfigFieldMap{}
 
 		for i := 0; i < t.NumField(); i++ {
 			fieldT := t.Field(i).Type
-			fieldOut, _ := g.translateOutputRefType(fieldT)
+			fieldOut, _ := g.translateOutputRefType(fieldT, inputObject)
 
-			fields[getNamingByStructField(t.Field(i))] = &graphql.Field{
-				Type: fieldOut,
+			if inputObject {
+				inputFields[getNamingByStructField(t.Field(i))] = &graphql.InputObjectFieldConfig{
+					Type: fieldOut,
+				}
+			} else {
+				fields[getNamingByStructField(t.Field(i))] = &graphql.Field{
+					Type: fieldOut,
+				}
 			}
 		}
 
-		ret = graphql.NewObject(graphql.ObjectConfig{
-			Name:   t.Name(),
-			Fields: fields,
-		})
-
-		g.outputTranslationMap[t.Name()] = ret
+		if inputObject {
+			ret = graphql.NewInputObject(graphql.InputObjectConfig{
+				Name:   t.Name(),
+				Fields: inputFields,
+			})
+			g.outputInputObjTable[t.Name()] = ret
+		} else {
+			ret = graphql.NewObject(graphql.ObjectConfig{
+				Name:   t.Name(),
+				Fields: fields,
+			})
+			g.outputObjTable[t.Name()] = ret
+		}
 	}
 
 	if !isPtr {
@@ -104,15 +123,15 @@ func (g translator) translateOutputRefType(t reflect.Type) (ret graphql.Output, 
 	return
 }
 
-// TranslateOutput Translates the type into a *graphql.Object
-func (g translator) TranslateOutput(t interface{}) (ret graphql.Output, err error) {
+// Translate translates the type into a *graphql.Object
+func (g translator) Translate(t interface{}) (ret graphql.Output, err error) {
 	v := reflect.TypeOf(t)
-	return g.translateOutputRefType(v)
+	return g.translateOutputRefType(v, false)
 }
 
-// MustTranslateOutput calls TranslateOutput, but will panic on error
-func (g translator) MustTranslateOutput(t interface{}) graphql.Output {
-	ret, _ := g.TranslateOutput(t)
+// MustTranslate calls Translate, but will panic on error
+func (g translator) MustTranslate(t interface{}) graphql.Output {
+	ret, _ := g.Translate(t)
 
 	// No errors as of now
 	//if err != nil {
@@ -122,9 +141,24 @@ func (g translator) MustTranslateOutput(t interface{}) graphql.Output {
 	return ret
 }
 
-//func (g translator) TranslateInputObject(t interface{}) (*graphql.InputObject, error) {
-//	return nil, nil
-//}
+// TranslateInputObject Translate translates a struct into a *graphql.InputObject
+func (g translator) TranslateInputObject(t interface{}) (*graphql.InputObject, error) {
+	v := reflect.TypeOf(t)
+	testV := v
+
+	if testV.Kind() == reflect.Pointer {
+		testV = testV.Elem()
+	}
+
+	if testV.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("grapher: TranslateInputObject only works with a struct type")
+	}
+
+	out, err := g.translateOutputRefType(v, true)
+
+	return out.(*graphql.InputObject), err
+}
+
 //
 //// MustTranslateInputObject calls TranslateInputObject, but will panic on error
 //func (g translator) MustTranslateInputObject(t interface{}) *graphql.InputObject {
