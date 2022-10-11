@@ -76,10 +76,10 @@ func NewTranslator(args ...*TranslatorConfig) Translator {
 		}
 	}
 
-	return t
+	return &t
 }
 
-func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (ret graphql.Output, err error) {
+func (g *translator) translateOutputRefType(t reflect.Type, inputObject bool) (ret graphql.Output, err error) {
 	isPtr := false
 	isArr := false
 
@@ -155,13 +155,13 @@ func (g translator) translateOutputRefType(t reflect.Type, inputObject bool) (re
 }
 
 // Translate translates the type into a *graphql.Object
-func (g translator) Translate(t interface{}) (ret graphql.Output, err error) {
+func (g *translator) Translate(t interface{}) (ret graphql.Output, err error) {
 	v := reflect.TypeOf(t)
 	return g.translateOutputRefType(v, false)
 }
 
 // MustTranslate calls Translate, but will panic on error
-func (g translator) MustTranslate(t interface{}) graphql.Output {
+func (g *translator) MustTranslate(t interface{}) graphql.Output {
 	ret, _ := g.Translate(t)
 
 	// No errors as of now
@@ -185,7 +185,7 @@ func assertStruct(v reflect.Type) (structType reflect.Type, err error) {
 }
 
 // TranslateInput translates a struct into a *graphql.InputObject
-func (g translator) TranslateInput(t interface{}) (ret *graphql.InputObject, err error) {
+func (g *translator) TranslateInput(t interface{}) (ret *graphql.InputObject, err error) {
 	v := reflect.TypeOf(t)
 	if _, err = assertStruct(v); err != nil {
 		return
@@ -197,7 +197,7 @@ func (g translator) TranslateInput(t interface{}) (ret *graphql.InputObject, err
 }
 
 // MustTranslateInput calls TranslateInputObject, but will panic on error
-func (g translator) MustTranslateInput(t interface{}) *graphql.InputObject {
+func (g *translator) MustTranslateInput(t interface{}) *graphql.InputObject {
 	ret, err := g.TranslateInput(t)
 
 	if err != nil {
@@ -208,7 +208,7 @@ func (g translator) MustTranslateInput(t interface{}) *graphql.InputObject {
 }
 
 // TranslateArgs translates a struct into a graphql.FieldConfigArgument
-func (g translator) TranslateArgs(t interface{}) (ret graphql.FieldConfigArgument, err error) {
+func (g *translator) TranslateArgs(t interface{}) (ret graphql.FieldConfigArgument, err error) {
 	structType, err := assertStruct(reflect.TypeOf(t))
 
 	if err != nil {

@@ -102,11 +102,3 @@ func TestMutationQueryCollector_WithMutation(t *testing.T) {
 		"query2": "query2",
 	})
 }
-
-func assertSchema(t *testing.T, schema graphql.Schema, requestString string, expectedValues map[string]interface{}) {
-	params := graphql.Params{Schema: schema, RequestString: requestString}
-	r := graphql.Do(params)
-
-	assert.Empty(t, r.Errors)
-	assert.EqualValues(t, expectedValues, r.Data)
-}
