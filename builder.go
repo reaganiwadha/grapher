@@ -113,13 +113,7 @@ func (f *fieldBuilder[argT, outT]) createResolver(useArgs bool) func(p graphql.R
 			return f.resolver(p, *args)
 		}
 
-		r, marshalErr := json.Marshal(p.Args)
-
-		if marshalErr != nil {
-			err = marshalErr
-			return
-		}
-
+		r, _ := json.Marshal(p.Args)
 		json.Unmarshal(r, &args)
 
 		if f.argValidator != nil {
