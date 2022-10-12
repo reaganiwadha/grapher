@@ -8,8 +8,11 @@ This package is still a work-in-progress. The feature candidates for the v1 rele
 - [x] Struct to `map[string]*graphql.ArgumentConfig{}`
 - [x] Configurable struct tags translator
 - [x] Schema field builder utilizing go 1.18 Generics feature ensuring type safety
-- [ ] Resolver middlewares
+- [x] Resolver middlewares
+- [x] Resolver arg validator
 - [x] Mux-like schema building with `MutationQueryCollector`
+
+Most features are done, but needs a little bit of polishing.
 
 If you have any feature ideas, do not hesitate to tell and open a new issue in the Issues tab!
 

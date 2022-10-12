@@ -6,9 +6,11 @@ import (
 	"reflect"
 )
 
-type ResolverFunc[argsT any, outT any] func(p graphql.ResolveParams, args argsT) (outT, error)
+type ResolverFn[argT any, outT any] func(p graphql.ResolveParams, arg argT) (outT, error)
 
-type GuardFunc func(p graphql.ResolveParams) bool
+type ResolverMiddlewareFn func(nextFn graphql.FieldResolveFn) graphql.FieldResolveFn
+
+type ArgValidatorFn func(arg any) (err error)
 
 type NoArgs struct{}
 
@@ -19,19 +21,21 @@ type FieldBuilderConfig struct {
 // FieldBuilder interface, put NoArgs to use no args
 type FieldBuilder[argT any, outT any] interface {
 	WithDescription(desc string) FieldBuilder[argT, outT]
-	WithResolver(resolverFunc ResolverFunc[argT, outT]) FieldBuilder[argT, outT]
+	WithResolver(resolverFunc ResolverFn[argT, outT]) FieldBuilder[argT, outT]
+	WithCustomArgValidator(fn ArgValidatorFn) FieldBuilder[argT, outT]
 
 	Build() (field *graphql.Field, err error)
 
-	// TODO
-	//AddGuard(guardFunc GuardFunc) FieldBuilder[argT, outT]
+	AddMiddleware(middlewareFn ResolverMiddlewareFn) FieldBuilder[argT, outT]
 }
 
 type fieldBuilder[argT any, outT any] struct {
-	desc     string
-	resolver ResolverFunc[argT, outT]
+	desc         string
+	resolver     ResolverFn[argT, outT]
+	argValidator ArgValidatorFn
 
-	translator Translator
+	translator  Translator
+	middlewares []ResolverMiddlewareFn
 }
 
 func (f *fieldBuilder[argT, outT]) WithDescription(desc string) FieldBuilder[argT, outT] {
@@ -39,8 +43,13 @@ func (f *fieldBuilder[argT, outT]) WithDescription(desc string) FieldBuilder[arg
 	return f
 }
 
-func (f *fieldBuilder[argT, outT]) WithResolver(resolverFunc ResolverFunc[argT, outT]) FieldBuilder[argT, outT] {
+func (f *fieldBuilder[argT, outT]) WithResolver(resolverFunc ResolverFn[argT, outT]) FieldBuilder[argT, outT] {
 	f.resolver = resolverFunc
+	return f
+}
+
+func (f *fieldBuilder[argT, outT]) WithCustomArgValidator(fn ArgValidatorFn) FieldBuilder[argT, outT] {
+	f.argValidator = fn
 	return f
 }
 
@@ -65,10 +74,16 @@ func (f *fieldBuilder[argT, outT]) Build() (field *graphql.Field, err error) {
 	//	return
 	//}
 
-	field.Resolve = createResolver[argT, outT](useArgs, f.resolver)
+	field.Resolve = f.createResolver(useArgs)
 	field.Type = fieldOutT
 
 	return
+}
+
+func (f *fieldBuilder[argT, outT]) AddMiddleware(middlewareFn ResolverMiddlewareFn) FieldBuilder[argT, outT] {
+	f.middlewares = append(f.middlewares, middlewareFn)
+
+	return f
 }
 
 func NewFieldBuilder[argT any, outT any](cfgArgs ...FieldBuilderConfig) FieldBuilder[argT, outT] {
@@ -90,22 +105,41 @@ func isGrapherNoArgs[T any]() bool {
 	return reflect.TypeOf(new(T)).String() == "*grapher.NoArgs"
 }
 
-func createResolver[aT any, oT any](useArgs bool, mainResolver func(p graphql.ResolveParams, args aT) (oT, error)) func(p graphql.ResolveParams) (res interface{}, err error) {
-	return func(p graphql.ResolveParams) (res interface{}, err error) {
-		args := new(aT)
+func (f *fieldBuilder[argT, outT]) createResolver(useArgs bool) func(p graphql.ResolveParams) (res interface{}, err error) {
+	lastFn := func(p graphql.ResolveParams) (res interface{}, err error) {
+		args := new(argT)
 
 		if !useArgs {
-			return mainResolver(p, *args)
+			return f.resolver(p, *args)
 		}
 
-		r, err := json.Marshal(p.Args)
+		r, marshalErr := json.Marshal(p.Args)
 
-		if err != nil {
+		if marshalErr != nil {
+			err = marshalErr
 			return
 		}
 
 		json.Unmarshal(r, &args)
 
-		return mainResolver(p, *args)
+		if f.argValidator != nil {
+			if err = f.argValidator(args); err != nil {
+				return
+			}
+		}
+
+		return f.resolver(p, *args)
 	}
+
+	if len(f.middlewares) == 0 {
+		return lastFn
+	}
+
+	endFn := f.middlewares[len(f.middlewares)-1](lastFn)
+
+	for i := 1; i < len(f.middlewares); i++ {
+		endFn = f.middlewares[i](endFn)
+	}
+
+	return endFn
 }
