@@ -15,7 +15,8 @@ type ArgValidatorFn func(arg any) (err error)
 type NoArgs struct{}
 
 type FieldBuilderConfig struct {
-	Translator Translator
+	Translator   Translator
+	ArgValidator ArgValidatorFn
 }
 
 // FieldBuilder interface, put NoArgs to use no args
@@ -25,6 +26,7 @@ type FieldBuilder[argT any, outT any] interface {
 	WithCustomArgValidator(fn ArgValidatorFn) FieldBuilder[argT, outT]
 
 	Build() (field *graphql.Field, err error)
+	MustBuild() *graphql.Field
 
 	AddMiddleware(middlewareFn ResolverMiddlewareFn) FieldBuilder[argT, outT]
 }
@@ -86,11 +88,22 @@ func (f *fieldBuilder[argT, outT]) AddMiddleware(middlewareFn ResolverMiddleware
 	return f
 }
 
+func (f *fieldBuilder[argT, outT]) MustBuild() *graphql.Field {
+	ret, err := f.Build()
+
+	if err != nil {
+		panic(err)
+	}
+
+	return ret
+}
+
 func NewFieldBuilder[argT any, outT any](cfgArgs ...FieldBuilderConfig) FieldBuilder[argT, outT] {
 	if len(cfgArgs) != 0 {
 		if cfgArgs[0].Translator != nil {
 			return &fieldBuilder[argT, outT]{
-				translator: cfgArgs[0].Translator,
+				translator:   cfgArgs[0].Translator,
+				argValidator: cfgArgs[0].ArgValidator,
 			}
 		}
 

@@ -46,6 +46,30 @@ func TestFieldBuilder_Resolver(t *testing.T) {
 	})
 }
 
+func TestFieldBuilder_MustBuild_Resolver(t *testing.T) {
+	ret := NewFieldBuilder[NoArgs, string]().
+		WithDescription("CoolTest").
+		WithResolver(func(p graphql.ResolveParams, args NoArgs) (string, error) {
+			return "hi", nil
+		}).
+		MustBuild()
+
+	assert.NotNil(t, ret)
+
+	fields := graphql.Fields{
+		"query1": ret,
+	}
+
+	assert.Equal(t, "CoolTest", ret.Description)
+	assertFieldResolver(t, fields, `
+		query {
+			query1
+		}
+	`, map[string]interface{}{
+		"query1": "hi",
+	})
+}
+
 func TestFieldBuilder_CustomTranslator(t *testing.T) {
 	translator := NewTranslator(&TranslatorConfig{
 		PredefinedTranslation: TranslationMap{
@@ -114,6 +138,16 @@ func TestFieldBuilder_InvalidArgs(t *testing.T) {
 		Build()
 
 	assert.Error(t, err)
+}
+
+func TestFieldBuilder_MustBuild_InvalidArgs(t *testing.T) {
+	assert.Panics(t, func() {
+		NewFieldBuilder[string, string]().
+			WithResolver(func(p graphql.ResolveParams, args string) (string, error) {
+				return "", nil
+			}).
+			MustBuild()
+	})
 }
 
 func TestFieldBuilder_Middlewares(t *testing.T) {
