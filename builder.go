@@ -144,7 +144,7 @@ func (f *fieldBuilder[argT, outT]) createResolver(useArgs bool) func(p graphql.R
 		return lastFn
 	}
 
-	endFn := f.middlewares[len(f.middlewares)-1](lastFn)
+	endFn := f.middlewares[0](lastFn)
 
 	for i := 1; i < len(f.middlewares); i++ {
 		endFn = f.middlewares[i](endFn)

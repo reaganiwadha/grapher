@@ -151,14 +151,18 @@ func TestFieldBuilder_MustBuild_InvalidArgs(t *testing.T) {
 }
 
 func TestFieldBuilder_Middlewares(t *testing.T) {
+	called := 0
+
 	middleware1 := func(nextFn graphql.FieldResolveFn) graphql.FieldResolveFn {
 		return func(p graphql.ResolveParams) (interface{}, error) {
+			called++
 			return nextFn(p)
 		}
 	}
 
 	middleware2 := func(nextFn graphql.FieldResolveFn) graphql.FieldResolveFn {
 		return func(p graphql.ResolveParams) (interface{}, error) {
+			called++
 			return nextFn(p)
 		}
 	}
@@ -183,6 +187,8 @@ func TestFieldBuilder_Middlewares(t *testing.T) {
 	`, map[string]interface{}{
 		"query1": "ok",
 	})
+
+	assert.Equal(t, 2, called)
 }
 
 func TestFieldBuilder_CustomArgParser(t *testing.T) {
