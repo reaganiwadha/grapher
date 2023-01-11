@@ -17,6 +17,7 @@ type NoArgs struct{}
 type FieldBuilderConfig struct {
 	Translator   Translator
 	ArgValidator ArgValidatorFn
+	Middlewares  []ResolverMiddlewareFn
 }
 
 // FieldBuilder interface, put NoArgs to use no args
@@ -104,6 +105,7 @@ func NewFieldBuilder[argT any, outT any](cfgArgs ...FieldBuilderConfig) FieldBui
 			return &fieldBuilder[argT, outT]{
 				translator:   cfgArgs[0].Translator,
 				argValidator: cfgArgs[0].ArgValidator,
+				middlewares:  cfgArgs[0].Middlewares,
 			}
 		}
 
