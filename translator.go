@@ -79,6 +79,30 @@ func NewTranslator(args ...*TranslatorConfig) Translator {
 	return &t
 }
 
+func sanitizeGenericTypeString(s string) (result string) {
+	begin := s[0:strings.Index(s, "[")]
+	generics := strings.Split(s[strings.Index(s, "[")+1:strings.Index(s, "]")], ",")
+	processedGenerics := []string{}
+
+	if strings.Contains(begin, ".") {
+		begin = begin[strings.LastIndex(begin, ".")+1:]
+	}
+
+	for _, v := range generics {
+		g := v[strings.LastIndex(v, "/")+1:]
+		g = g[strings.LastIndex(g, ".")+1:]
+
+		processedGenerics = append(processedGenerics, g)
+	}
+
+	result = begin
+	for _, v := range processedGenerics {
+		result = fmt.Sprintf("%v_%v", result, v)
+	}
+
+	return
+}
+
 func (g *translator) translateOutputRefType(t reflect.Type, inputObject bool) (ret graphql.Output, err error) {
 	isPtr := false
 	isArr := false
@@ -128,15 +152,20 @@ func (g *translator) translateOutputRefType(t reflect.Type, inputObject bool) (r
 			}
 		}
 
+		inputObjName := t.Name()
+		if strings.ContainsAny(inputObjName, "[") {
+			inputObjName = sanitizeGenericTypeString(inputObjName)
+		}
+
 		if inputObject {
 			ret = graphql.NewInputObject(graphql.InputObjectConfig{
-				Name:   t.Name(),
+				Name:   inputObjName,
 				Fields: inputFields,
 			})
 			g.outputInputObjTable[t.String()] = ret
 		} else {
 			ret = graphql.NewObject(graphql.ObjectConfig{
-				Name:   t.Name(),
+				Name:   inputObjName,
 				Fields: fields,
 			})
 			g.outputObjTable[t.String()] = ret

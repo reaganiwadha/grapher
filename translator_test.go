@@ -100,6 +100,21 @@ func TestTranslator_Translate_SimpleStruct(t *testing.T) {
 	testCustomerType(t, obj)
 }
 
+type Generic[T1 any, T2 any] struct {
+	ID int `json:"id"`
+	T1 T1  `json:"t1"`
+	T2 T2  `json:"t2"`
+}
+
+func TestTranslator_Translate_GenericStruct(t *testing.T) {
+	g := NewTranslator()
+
+	obj, err := g.Translate(&Generic[Customer, Order]{})
+	assert.NoError(t, err)
+	assert.NoError(t, obj.Error())
+	assert.NotNil(t, obj)
+}
+
 func TestTranslator_Translate_WithoutCache(t *testing.T) {
 	g := NewTranslator()
 
