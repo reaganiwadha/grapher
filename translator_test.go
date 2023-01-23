@@ -6,6 +6,7 @@ import (
 	"github.com/reaganiwadha/grapher/scalars"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestTranslate_ValueType(t *testing.T) {
@@ -232,6 +233,20 @@ func TestTranslator_MustTranslateArgs_NestedStruct(t *testing.T) {
 
 	fieldArgs := g.MustTranslateArgs(&QueryUser{})
 	testQueryUserFieldConfigArgument(t, fieldArgs)
+}
+
+type WithTime struct {
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt *time.Time `json:"updated_at"`
+}
+
+func TestTranslator_Time(t *testing.T) {
+	g := NewTranslator()
+
+	fieldArgs := g.MustTranslateArgs(&WithTime{})
+
+	assert.Equal(t, fieldArgs["created_at"].Type, graphql.NewNonNull(graphql.DateTime))
+	assert.Equal(t, fieldArgs["updated_at"].Type, graphql.DateTime)
 }
 
 func TestTranslator_MustTranslateArgs_ValueType_Panics(t *testing.T) {

@@ -12,20 +12,21 @@ import (
 type TranslationMap map[string]graphql.Output
 
 var primitiveTranslationTable = TranslationMap{
-	"int":     graphql.Int,
-	"int8":    graphql.Int,
-	"int16":   graphql.Int,
-	"int32":   graphql.Int,
-	"int64":   graphql.Int,
-	"uint":    graphql.Int,
-	"uint8":   graphql.Int,
-	"uint16":  graphql.Int,
-	"uint32":  graphql.Int,
-	"uint64":  graphql.Int,
-	"float32": graphql.Float,
-	"float64": graphql.Float,
-	"string":  graphql.String,
-	"bool":    graphql.Boolean,
+	"int":       graphql.Int,
+	"int8":      graphql.Int,
+	"int16":     graphql.Int,
+	"int32":     graphql.Int,
+	"int64":     graphql.Int,
+	"uint":      graphql.Int,
+	"uint8":     graphql.Int,
+	"uint16":    graphql.Int,
+	"uint32":    graphql.Int,
+	"uint64":    graphql.Int,
+	"float32":   graphql.Float,
+	"float64":   graphql.Float,
+	"string":    graphql.String,
+	"bool":      graphql.Boolean,
+	"time.Time": graphql.DateTime,
 }
 
 // TranslatorConfig Stores the configuration of the graphql object builder
