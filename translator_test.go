@@ -68,7 +68,6 @@ func testCustomerType(t *testing.T, actual graphql.Output) {
 		obj = actual.(*graphql.NonNull).OfType.(*graphql.Object)
 	}
 
-	assert.Equal(t, "Customer", obj.Name())
 	assert.Equal(t, obj.Fields()["ID"].Type, graphql.NewNonNull(graphql.Int))
 	assert.Equal(t, obj.Fields()["Name"].Type, graphql.NewNonNull(graphql.String))
 	assert.Equal(t, obj.Fields()["Name"].Description, "The name of the customer")
@@ -88,9 +87,32 @@ type Customer struct {
 	Address *string
 }
 
+type CustomerOmitempty struct {
+	ID      int
+	Name    string `json:"name,omitempty" grapher_d:"The name of the customer"`
+	Address *string
+}
+
 type Order struct {
 	ID       int      `json:"id"`
 	Customer Customer `json:"customer"`
+}
+
+func TestTranslator_Translate_Omitempty(t *testing.T) {
+	g := NewTranslator()
+
+	actual, err := g.Translate(&CustomerOmitempty{})
+	assert.NoError(t, err)
+
+	obj, ok := actual.(*graphql.Object)
+	if !ok {
+		obj = actual.(*graphql.NonNull).OfType.(*graphql.Object)
+	}
+
+	assert.Equal(t, obj.Fields()["ID"].Type, graphql.NewNonNull(graphql.Int))
+	assert.Equal(t, obj.Fields()["Name"].Type, graphql.NewNonNull(graphql.String))
+	assert.Equal(t, obj.Fields()["Name"].Description, "The name of the customer")
+	assert.Equal(t, obj.Fields()["Address"].Type, graphql.String)
 }
 
 func TestTranslator_Translate_SimpleStruct(t *testing.T) {

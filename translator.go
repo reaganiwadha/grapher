@@ -45,7 +45,7 @@ func getNamingByStructField(field reflect.StructField) string {
 	jsonTag := field.Tag.Get("json")
 
 	if jsonTag != "" {
-		return strings.TrimSuffix(jsonTag, ",")
+		strings.TrimRight(jsonTag, ",")
 	}
 
 	return field.Name
