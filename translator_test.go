@@ -110,8 +110,8 @@ func TestTranslator_Translate_Omitempty(t *testing.T) {
 	}
 
 	assert.Equal(t, obj.Fields()["ID"].Type, graphql.NewNonNull(graphql.Int))
-	assert.Equal(t, obj.Fields()["Name"].Type, graphql.NewNonNull(graphql.String))
-	assert.Equal(t, obj.Fields()["Name"].Description, "The name of the customer")
+	assert.Equal(t, obj.Fields()["name"].Type, graphql.NewNonNull(graphql.String))
+	assert.Equal(t, obj.Fields()["name"].Description, "The name of the customer")
 	assert.Equal(t, obj.Fields()["Address"].Type, graphql.String)
 }
 
