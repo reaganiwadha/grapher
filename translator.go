@@ -113,14 +113,14 @@ func (g *translator) translateOutputRefType(t reflect.Type, inputObject bool) (r
 	isPtr := false
 	isArr := false
 
-	if t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
-		t = t.Elem()
-		isArr = true
-	}
-
 	for t.Kind() == reflect.Ptr {
 		t = t.Elem()
 		isPtr = true
+	}
+
+	if t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
+		t = t.Elem()
+		isArr = true
 	}
 
 	tName := t.String()

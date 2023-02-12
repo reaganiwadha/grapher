@@ -1,6 +1,7 @@
 package grapher
 
 import (
+	"fmt"
 	"github.com/graphql-go/graphql"
 	"github.com/guregu/null"
 	"github.com/reaganiwadha/grapher/scalars"
@@ -79,6 +80,18 @@ func testOrderType(t *testing.T, actual graphql.Output) {
 	assert.Equal(t, "Order", obj.Name())
 	assert.Equal(t, obj.Fields()["id"].Type, graphql.NewNonNull(graphql.Int))
 	testCustomerType(t, obj.Fields()["customer"].Type)
+}
+
+type PtrArray struct {
+	Tags *[]string `json:"tags"`
+}
+
+func TestTranslator_Translate_PtrArray(t *testing.T) {
+	g := NewTranslator()
+
+	ret, err := g.TranslateArgs(&PtrArray{})
+	assert.NoError(t, err)
+	fmt.Println(ret)
 }
 
 type Customer struct {
