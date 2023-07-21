@@ -1,6 +1,7 @@
 # grapher [![Go Reference](https://pkg.go.dev/badge/github.com/reaganiwadha/grapher.svg)](https://pkg.go.dev/github.com/reaganiwadha/grapher) [![Go Report Card](https://goreportcard.com/badge/github.com/reaganiwadha/grapher)](https://goreportcard.com/report/github.com/reaganiwadha/grapher) [![codecov](https://codecov.io/gh/reaganiwadha/grapher/branch/trunk/graph/badge.svg)](https://codecov.io/gh/reaganiwadha/grapher)
 
-Neat extra tooling for [graphql-go](https://github.com/graphql-go/graphql).
+A GraphQL field builder utilizing Go generics with extra utilities and features.
+Depends on [graphql-go](https://github.com/graphql-go/graphql).
 
 ## Examples
 ### Without grapher
